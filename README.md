@@ -47,6 +47,12 @@ Ce projet est une application web qui permet de mettre à jour vos contacts tél
 5. **Numéros avec différents formats** :
    - Numéros courts ou avec des caractères non numériques sont exclus.
 
+6. **Numéros avec préfixe international `+229`** :
+   - Si un numéro commence par `+229` et que la partie locale (après `+229`) ne commence pas par `01`, alors `01` est ajouté.
+   - Exemple : `+22951220980` devient `+2290151220980`.
+   - Les numéros déjà conformes (ex. `+2290151220980`) restent inchangés.
+
+
 ---
 
 ## Dépendances
