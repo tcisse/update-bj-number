@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +11,7 @@
       margin: 20px;
       text-align: center;
     }
+
     .container {
       max-width: 600px;
       margin: 0 auto;
@@ -18,9 +20,11 @@
       border-radius: 10px;
       box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
     }
+
     input[type="file"] {
       margin: 20px 0;
     }
+
     button {
       padding: 10px 20px;
       background-color: #007BFF;
@@ -30,18 +34,22 @@
       cursor: pointer;
       margin-top: 10px;
     }
+
     button:hover {
       background-color: #0056b3;
     }
+
     #downloadLink {
       display: none;
       margin-top: 20px;
       text-decoration: none;
       color: #28a745;
     }
+
     #downloadLink:hover {
       text-decoration: underline;
     }
+
     #preview {
       margin-top: 20px;
       text-align: left;
@@ -52,19 +60,22 @@
       padding: 10px;
       border-radius: 5px;
     }
+
     .contact {
       margin-bottom: 10px;
     }
+
     .hidden {
       display: none;
     }
   </style>
 </head>
+
 <body>
   <div class="container">
     <h1>Mettre à jour les contacts</h1>
     <p>Importez votre fichier .vcf, examinez les modifications proposées, et validez avant de télécharger.</p>
-    
+
     <input type="file" id="fileInput" accept=".vcf" />
     <button id="checkButton">Afficher les modifications proposées</button>
     <div id="preview"></div>
@@ -96,33 +107,32 @@
       const file = fileInput.files[0];
       const reader = new FileReader();
 
-      reader.onload = function(event) {
+      reader.onload = function (event) {
         originalContent = event.target.result;
-        const updatedNumbers = [];
-
-        // Identifier les contacts et numéros à modifier avec la logique pour +229
-        updatedContent = originalContent.replace(/BEGIN:VCARD([\s\S]*?)END:VCARD/g, (vcard) => {
-          const nameMatch = vcard.match(/FN:(.+)/); // Récupérer le nom complet
-          const phoneMatch = vcard.match(/TEL;.*:(.+)/); // Récupérer le numéro de téléphone
-
-          if (phoneMatch) {
-            let originalPhone = phoneMatch[1].replace(/\s+/g, ''); // Supprimer les espaces
+            const originalPhone = phoneMatch[1].replace(/\s+/g, ''); // Supprimer les espaces
             const name = nameMatch ? nameMatch[1] : "Sans nom";
 
-            if (originalPhone.startsWith('+229')) {
-              // Cas 6 : Numéros internationaux avec +229
-              const localPart = originalPhone.slice(4); // Récupérer les chiffres après +229
-              if (!localPart.startsWith('01')) {
-                const updatedPhone = `+22901${localPart}`;
-                updatedNumbers.push({ name, original: phoneMatch[1], updated: updatedPhone });
-                return vcard.replace(phoneMatch[1], updatedPhone);
+            // Vérifier si le numéro commence par '229' et si sa longueur totale est de 11 chiffres ou si le numéro est juste de 8 chiffres
+            if ((originalPhone.startsWith('229') && originalPhone.length === 11) || originalPhone.length === 8) {
+              // Extraire les 8 derniers chiffres du numéro
+              const phoneWithoutPrefix = originalPhone.slice(-8); // Récupérer les 8 derniers chiffres
+
+              const prefix = phoneWithoutPrefix.slice(0, 2); // Extraire les deux premiers chiffres du numéro sans le préfixe
+
+              // Liste des préfixes valides
+              const validPrefixes = [
+                "50", "51", "52", "53", "54", "56", "57", "59", "61", "62", "66", "67",
+                "69", "90", "91", "96", "97", "42", "46", "44", "99", "98", "95", "94",
+                "65", "64", "63", "68", "60", "55", "58", "45", "40", "41", "43"
+              ];
+
+              // Vérifier si le préfixe est dans la liste des préfixes valides
+              if (validPrefixes.includes(prefix)) {
+                const updatedPhone = '22901' + phoneWithoutPrefix; // Ajouter le préfixe '01' aux 8 derniers chiffres
+                const formattedUpdatedPhone = updatedPhone.replace(/(\d{2})(\d{2})(\d{4})/, '$1 $2 $3'); // Reformater avec des espaces
+                updatedNumbers.push({ name, original: phoneMatch[1], updated: formattedUpdatedPhone });
+                return vcard.replace(phoneMatch[1], formattedUpdatedPhone); // Remplacer dans le vCard
               }
-            } else if (originalPhone.length === 8 && !originalPhone.startsWith('01') && !originalPhone.startsWith('02')) {
-              // Cas 1 et 2 : Numéros locaux standard ou avec espaces
-              const updatedPhone = `01${originalPhone}`;
-              const formattedUpdatedPhone = updatedPhone.replace(/(\d{2})(\d{2})(\d{4})/, '$1 $2 $3');
-              updatedNumbers.push({ name, original: phoneMatch[1], updated: formattedUpdatedPhone });
-              return vcard.replace(phoneMatch[1], formattedUpdatedPhone);
             }
           }
           return vcard; // Pas de modification
@@ -181,4 +191,5 @@
     });
   </script>
 </body>
+
 </html>
