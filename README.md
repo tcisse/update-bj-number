@@ -1,4 +1,4 @@
-# Gestion et Mise à Jour des Contacts avec Préfixe `01`
+# Mise à Jour des Contacts avec Préfixe `01`
 
 Ce projet est une application web qui permet de mettre à jour vos contacts téléphoniques en ajoutant automatiquement le préfixe `01` pour les numéros de téléphone au format béninois. L'application utilise un fichier `.vcf` (vCard) pour l'importation et l'exportation des contacts, en fournissant une interface utilisateur pour visualiser les changements avant validation.
 
