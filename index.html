@@ -99,25 +99,34 @@
       reader.onload = function(event) {
         originalContent = event.target.result;
         const updatedNumbers = [];
-// Identifier les contacts et numéros à modifier avec gestion des espaces
-updatedContent = originalContent.replace(/BEGIN:VCARD([\s\S]*?)END:VCARD/g, (vcard) => {
-  const nameMatch = vcard.match(/FN:(.+)/); // Récupérer le nom complet
-  const phoneMatch = vcard.match(/TEL;.*:(.+)/); // Récupérer le numéro de téléphone
 
-  if (phoneMatch) {
-    const originalPhone = phoneMatch[1].replace(/\s+/g, ''); // Supprimer les espaces
-    const name = nameMatch ? nameMatch[1] : "Sans nom";
+        // Identifier les contacts et numéros à modifier avec la logique pour +229
+        updatedContent = originalContent.replace(/BEGIN:VCARD([\s\S]*?)END:VCARD/g, (vcard) => {
+          const nameMatch = vcard.match(/FN:(.+)/); // Récupérer le nom complet
+          const phoneMatch = vcard.match(/TEL;.*:(.+)/); // Récupérer le numéro de téléphone
 
-    // Vérifier que le numéro a exactement 8 chiffres après suppression des espaces
-    if (originalPhone.length === 8 && !originalPhone.startsWith('01') && !originalPhone.startsWith('02')) {
-      const updatedPhone = '01' + originalPhone; // Ajouter le préfixe '01'
-      const formattedUpdatedPhone = updatedPhone.replace(/(\d{2})(\d{2})(\d{4})/, '$1 $2 $3'); // Reformater avec des espaces
-      updatedNumbers.push({ name, original: phoneMatch[1], updated: formattedUpdatedPhone });
-      return vcard.replace(phoneMatch[1], formattedUpdatedPhone); // Remplacer dans le vCard
-    }
-  }
-  return vcard; // Pas de modification
-});
+          if (phoneMatch) {
+            let originalPhone = phoneMatch[1].replace(/\s+/g, ''); // Supprimer les espaces
+            const name = nameMatch ? nameMatch[1] : "Sans nom";
+
+            if (originalPhone.startsWith('+229')) {
+              // Cas 6 : Numéros internationaux avec +229
+              const localPart = originalPhone.slice(4); // Récupérer les chiffres après +229
+              if (!localPart.startsWith('01')) {
+                const updatedPhone = `+22901${localPart}`;
+                updatedNumbers.push({ name, original: phoneMatch[1], updated: updatedPhone });
+                return vcard.replace(phoneMatch[1], updatedPhone);
+              }
+            } else if (originalPhone.length === 8 && !originalPhone.startsWith('01') && !originalPhone.startsWith('02')) {
+              // Cas 1 et 2 : Numéros locaux standard ou avec espaces
+              const updatedPhone = `01${originalPhone}`;
+              const formattedUpdatedPhone = updatedPhone.replace(/(\d{2})(\d{2})(\d{4})/, '$1 $2 $3');
+              updatedNumbers.push({ name, original: phoneMatch[1], updated: formattedUpdatedPhone });
+              return vcard.replace(phoneMatch[1], formattedUpdatedPhone);
+            }
+          }
+          return vcard; // Pas de modification
+        });
 
         // Afficher les modifications proposées
         previewDiv.innerHTML = '<h3>Modifications proposées :</h3>';
