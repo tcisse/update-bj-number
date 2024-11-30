@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mettre à jour les contacts</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      text-align: center;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    input[type="file"] {
+      margin: 20px 0;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #downloadLink {
+      display: none;
+      margin-top: 20px;
+      text-decoration: none;
+      color: #28a745;
+    }
+    #downloadLink:hover {
+      text-decoration: underline;
+    }
+    #preview {
+      margin-top: 20px;
+      text-align: left;
+      font-size: 14px;
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .contact {
+      margin-bottom: 10px;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Mettre à jour les contacts</h1>
+    <p>Importez votre fichier .vcf, examinez les modifications proposées, et validez avant de télécharger.</p>
+    
+    <input type="file" id="fileInput" accept=".vcf" />
+    <button id="checkButton">Afficher les modifications proposées</button>
+    <div id="preview"></div>
+    <div id="modificationCount" class="hidden">
+      <h3>Total de contacts à modifier : <span id="count"></span></h3>
+    </div>
+    <button id="validateButton" class="hidden">Valider les modifications</button>
+    <a id="downloadLink" href="#" download="updated_contacts.vcf">Télécharger les contacts modifiés</a>
+  </div>
+
+  <script>
+    let originalContent = '';
+    let updatedContent = '';
+    let changesPending = false;
+
+    document.getElementById('checkButton').addEventListener('click', () => {
+      const fileInput = document.getElementById('fileInput');
+      const previewDiv = document.getElementById('preview');
+      const validateButton = document.getElementById('validateButton');
+      const downloadLink = document.getElementById('downloadLink');
+      const modificationCountDiv = document.getElementById('modificationCount');
+      const countSpan = document.getElementById('count');
+
+      if (!fileInput.files.length) {
+        alert('Veuillez importer un fichier .vcf');
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function(event) {
+        originalContent = event.target.result;
+        const updatedNumbers = [];
+// Identifier les contacts et numéros à modifier avec gestion des espaces
+updatedContent = originalContent.replace(/BEGIN:VCARD([\s\S]*?)END:VCARD/g, (vcard) => {
+  const nameMatch = vcard.match(/FN:(.+)/); // Récupérer le nom complet
+  const phoneMatch = vcard.match(/TEL;.*:(.+)/); // Récupérer le numéro de téléphone
+
+  if (phoneMatch) {
+    const originalPhone = phoneMatch[1].replace(/\s+/g, ''); // Supprimer les espaces
+    const name = nameMatch ? nameMatch[1] : "Sans nom";
+
+    // Vérifier que le numéro a exactement 8 chiffres après suppression des espaces
+    if (originalPhone.length === 8 && !originalPhone.startsWith('01') && !originalPhone.startsWith('02')) {
+      const updatedPhone = '01' + originalPhone; // Ajouter le préfixe '01'
+      const formattedUpdatedPhone = updatedPhone.replace(/(\d{2})(\d{2})(\d{4})/, '$1 $2 $3'); // Reformater avec des espaces
+      updatedNumbers.push({ name, original: phoneMatch[1], updated: formattedUpdatedPhone });
+      return vcard.replace(phoneMatch[1], formattedUpdatedPhone); // Remplacer dans le vCard
+    }
+  }
+  return vcard; // Pas de modification
+});
+
+        // Afficher les modifications proposées
+        previewDiv.innerHTML = '<h3>Modifications proposées :</h3>';
+        if (updatedNumbers.length > 0) {
+          updatedNumbers.forEach((entry) => {
+            const div = document.createElement('div');
+            div.className = 'contact';
+            div.innerHTML = `
+              <strong>Nom :</strong> ${entry.name} <br>
+              <strong>Ancien numéro :</strong> ${entry.original} <br>
+              <strong>Nouveau numéro :</strong> ${entry.updated}
+            `;
+            previewDiv.appendChild(div);
+          });
+
+          // Afficher le nombre total de modifications
+          countSpan.textContent = updatedNumbers.length;
+          modificationCountDiv.classList.remove('hidden');
+
+          changesPending = true;
+          validateButton.classList.remove('hidden');
+        } else {
+          previewDiv.innerHTML += '<p>Aucune modification nécessaire.</p>';
+          modificationCountDiv.classList.add('hidden');
+          changesPending = false;
+          validateButton.classList.add('hidden');
+        }
+
+        // Masquer le lien de téléchargement avant validation
+        downloadLink.style.display = 'none';
+      };
+
+      reader.readAsText(file);
+    });
+
+    document.getElementById('validateButton').addEventListener('click', () => {
+      if (!changesPending) {
+        alert('Aucune modification en attente.');
+        return;
+      }
+
+      const downloadLink = document.getElementById('downloadLink');
+
+      // Créer un fichier Blob pour le téléchargement
+      const blob = new Blob([updatedContent], { type: 'text/vcard' });
+      const url = URL.createObjectURL(blob);
+
+      // Activer le lien de téléchargement
+      downloadLink.href = url;
+      downloadLink.style.display = 'inline';
+      alert('Modifications validées. Vous pouvez maintenant télécharger le fichier.');
+    });
+  </script>
+</body>
+</html>
