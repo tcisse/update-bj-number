@@ -115,39 +115,31 @@
           const nameMatch = vcard.match(/FN:(.+)/); // Récupérer le nom complet
           const phoneMatch = vcard.match(/TEL;.*:(.+)/); // Récupérer le numéro de téléphone
 
-          //if (phoneMatch) {
-          //   const originalPhone = phoneMatch[1].replace(/\s+/g, ''); // Supprimer les espaces
-          //   const name = nameMatch ? nameMatch[1] : "Sans nom";
-
-          //   // Vérifier que le numéro a exactement 8 chiffres après suppression des espaces
-          //   if (originalPhone.length === 8 && !originalPhone.startsWith('01') && !originalPhone.startsWith('02')) {
-          //     const updatedPhone = '01' + originalPhone; // Ajouter le préfixe '01'
-          //     const formattedUpdatedPhone = updatedPhone.replace(/(\d{2})(\d{2})(\d{4})/, '$1 $2 $3'); // Reformater avec des espaces
-          //     updatedNumbers.push({ name, original: phoneMatch[1], updated: formattedUpdatedPhone });
-          //     return vcard.replace(phoneMatch[1], formattedUpdatedPhone); // Remplacer dans le vCard
-          //   }
-          // }
-
-          const prefixes = [
-            "50", "51", "52", "53", "54", "56", "57", "59", "61", "62", "66", "67",
-            "69", "90", "91", "96", "97", "42", "46", "44", "99", "98", "95", "94",
-            "65", "64", "63", "68", "60", "55", "58", "45", "40", "41", "43"
-          ];
-
           if (phoneMatch) {
             const originalPhone = phoneMatch[1].replace(/\s+/g, ''); // Supprimer les espaces
             const name = nameMatch ? nameMatch[1] : "Sans nom";
 
-            // Vérifier que le numéro a exactement 8 chiffres après suppression des espaces
-            const last8Digits = originalPhone.slice(-8); // Prendre les 8 derniers chiffres
-            const prefix = last8Digits.slice(0, 2); // Extraire les 2 premiers chiffres pour vérifier le préfixe
+            // Vérifier si le numéro commence par '229' et si sa longueur totale est de 11 chiffres ou si le numéro est juste de 8 chiffres
+            if ((originalPhone.startsWith('229') && originalPhone.length === 11) || originalPhone.length === 8) {
+              // Extraire les 8 derniers chiffres du numéro
+              const phoneWithoutPrefix = originalPhone.slice(-8); // Récupérer les 8 derniers chiffres
 
-            // Vérifier si le préfixe est valide
-            if (last8Digits.length === 8 && prefixes.includes(prefix)) {
-              const updatedPhone = '22901' + last8Digits; // Ajouter le préfixe '01'
-              const formattedUpdatedPhone = updatedPhone.replace(/(\d{2})(\d{2})(\d{4})/, '$1 $2 $3'); // Reformater avec des espaces
-              updatedNumbers.push({ name, original: phoneMatch[1], updated: formattedUpdatedPhone });
-              return vcard.replace(phoneMatch[1], formattedUpdatedPhone); // Remplacer dans le vCard
+              const prefix = phoneWithoutPrefix.slice(0, 2); // Extraire les deux premiers chiffres du numéro sans le préfixe
+
+              // Liste des préfixes valides
+              const validPrefixes = [
+                "50", "51", "52", "53", "54", "56", "57", "59", "61", "62", "66", "67",
+                "69", "90", "91", "96", "97", "42", "46", "44", "99", "98", "95", "94",
+                "65", "64", "63", "68", "60", "55", "58", "45", "40", "41", "43"
+              ];
+
+              // Vérifier si le préfixe est dans la liste des préfixes valides
+              if (validPrefixes.includes(prefix)) {
+                const updatedPhone = '22901' + phoneWithoutPrefix; // Ajouter le préfixe '01' aux 8 derniers chiffres
+                const formattedUpdatedPhone = updatedPhone.replace(/(\d{2})(\d{2})(\d{4})/, '$1 $2 $3'); // Reformater avec des espaces
+                updatedNumbers.push({ name, original: phoneMatch[1], updated: formattedUpdatedPhone });
+                return vcard.replace(phoneMatch[1], formattedUpdatedPhone); // Remplacer dans le vCard
+              }
             }
           }
 
