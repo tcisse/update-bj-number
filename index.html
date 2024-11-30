@@ -109,13 +109,6 @@
 
       reader.onload = function (event) {
         originalContent = event.target.result;
-        const updatedNumbers = [];
-        // Identifier les contacts et numéros à modifier avec gestion des espaces
-        updatedContent = originalContent.replace(/BEGIN:VCARD([\s\S]*?)END:VCARD/g, (vcard) => {
-          const nameMatch = vcard.match(/FN:(.+)/); // Récupérer le nom complet
-          const phoneMatch = vcard.match(/TEL;.*:(.+)/); // Récupérer le numéro de téléphone
-
-          if (phoneMatch) {
             const originalPhone = phoneMatch[1].replace(/\s+/g, ''); // Supprimer les espaces
             const name = nameMatch ? nameMatch[1] : "Sans nom";
 
@@ -142,7 +135,6 @@
               }
             }
           }
-
           return vcard; // Pas de modification
         });
 
