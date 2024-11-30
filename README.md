@@ -87,16 +87,3 @@ Ce projet est une application web qui permet de mettre à jour vos contacts tél
 ![Aperçu des Modifications](screenshot-preview.png)
 
 ---
-
-## Améliorations Futures
-
-- Gestion des formats internationaux.
-- Prise en charge de formats non standards (ex. numéros avec tirets, parenthèses).
-- Ajout de tests unitaires pour garantir la fiabilité des modifications.
-
----
-
-## Auteurs
-
-- **Développeur** : [Votre Nom ou Équipe]
-- **Date** : Novembre 2024
