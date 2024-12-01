@@ -119,10 +119,22 @@
             const name = nameMatch ? nameMatch[1] : 'Sans nom';
 
             if (originalPhone.length === 8 && !originalPhone.startsWith('01') && !originalPhone.startsWith('02')) {
+              // Ajouter '01' aux numéros locaux à 8 chiffres
               const updatedPhone = `01${originalPhone}`;
               const formattedUpdatedPhone = updatedPhone.replace(/(\d{2})(\d{2})(\d{4})/, '$1 $2 $3');
               updatedNumbers.push({ name, original: phoneMatch[1], updated: formattedUpdatedPhone });
               return vcard.replace(phoneMatch[1], formattedUpdatedPhone);
+            } else if (
+              originalPhone.startsWith('+229') ||
+              originalPhone.startsWith('00229')
+            ) {
+              // Gestion des numéros commençant par +229 ou 00229
+              const localPart = originalPhone.replace(/^\+229|^00229/, ''); // Extraire la partie locale
+              if (!localPart.startsWith('01')) {
+                const updatedPhone = `+22901${localPart}`;
+                updatedNumbers.push({ name, original: phoneMatch[1], updated: updatedPhone });
+                return vcard.replace(phoneMatch[1], updatedPhone);
+              }
             }
           }
           return vcard; // Pas de modification
@@ -188,7 +200,7 @@
             }
 
             if (!originalPhone.slice(4).startsWith('01')) {
-              const secondaryPhone = '+22901' + originalPhone.slice(4); // Générer le numéro secondaire
+              const secondaryPhone = `+22901${originalPhone.slice(4)}`; // Générer le numéro secondaire
               updatedNumbers.push({ name, existing: phoneMatch[1], secondary: secondaryPhone });
 
               return vcard + `\nTEL;TYPE=SECONDARY:${secondaryPhone}`; // Ajouter le numéro secondaire
