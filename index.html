@@ -72,7 +72,7 @@
     <div id="modificationCount" class="hidden">
       <h3>Total de contacts à modifier : <span id="count"></span></h3>
     </div>
-    <a id="downloadLink" href="#" download="updated_contacts.vcf">Télécharger le fichier modifié</a>
+    <a id="downloadLink" href="#" download="updated_contacts.vcf">Télécharger</a>
   </div>
 
   <script>
@@ -81,13 +81,14 @@
     let updatedSecondaryContent = '';
     let changesPending = false;
 
-    function enableDownload(content, fileName) {
+    function enableDownload(content, fileName, linkText) {
       const downloadLink = document.getElementById('downloadLink');
       const blob = new Blob([content], { type: 'text/vcard' });
       const url = URL.createObjectURL(blob);
 
       downloadLink.href = url;
       downloadLink.download = fileName;
+      downloadLink.textContent = linkText;
       downloadLink.style.display = 'inline';
     }
 
@@ -146,7 +147,7 @@
           modificationCountDiv.classList.remove('hidden');
 
           changesPending = true;
-          enableDownload(updatedContent, 'updated_contacts.vcf');
+          enableDownload(updatedContent, 'updated_contacts.vcf', 'Télécharger avec les contacts modifiés');
         } else {
           previewDiv.innerHTML += '<p>Aucune modification nécessaire.</p>';
           modificationCountDiv.classList.add('hidden');
@@ -211,7 +212,7 @@
             previewDiv.appendChild(div);
           });
 
-          enableDownload(updatedSecondaryContent, 'contacts_with_secondary_numbers.vcf');
+          enableDownload(updatedSecondaryContent, 'contacts_with_secondary_numbers.vcf', 'Télécharger avec les contacts secondaires');
         } else {
           previewDiv.innerHTML += '<p>Aucun numéro secondaire ajouté.</p>';
           document.getElementById('downloadLink').style.display = 'none';
