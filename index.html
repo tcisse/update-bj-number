@@ -33,13 +33,13 @@
     button:hover {
       background-color: #0056b3;
     }
-    #downloadLink, #downloadSecondaryLink {
+    #downloadLink {
       display: none;
       margin-top: 20px;
       text-decoration: none;
       color: #28a745;
     }
-    #downloadLink:hover, #downloadSecondaryLink:hover {
+    #downloadLink:hover {
       text-decoration: underline;
     }
     #preview {
@@ -67,33 +67,25 @@
     
     <input type="file" id="fileInput" accept=".vcf" />
     <button id="checkButton">Afficher les modifications proposées</button>
+    <button id="secondaryButton">Créer un numéro secondaire</button>
     <div id="preview"></div>
     <div id="modificationCount" class="hidden">
       <h3>Total de contacts à modifier : <span id="count"></span></h3>
     </div>
-    <div id="secondaryCount" class="hidden">
-      <h3>Total de contacts avec numéros secondaires : <span id="secondary"></span></h3>
-    </div>
-    <button id="validateButton" class="hidden">Valider les modifications</button>
-    <button id="secondaryButton" class="hidden">Créer un numéro secondaire</button>
     <a id="downloadLink" href="#" download="updated_contacts.vcf">Télécharger les contacts modifiés</a>
-    <a id="downloadSecondaryLink" href="#" download="contacts_with_secondary_numbers.vcf">Télécharger avec numéro secondaire</a>
   </div>
 
   <script>
     let originalContent = '';
     let updatedContent = '';
-    let secondaryContent = '';
+    let updatedSecondaryContent = '';
     let changesPending = false;
 
     document.getElementById('checkButton').addEventListener('click', () => {
       const fileInput = document.getElementById('fileInput');
       const previewDiv = document.getElementById('preview');
-      const validateButton = document.getElementById('validateButton');
-      const secondaryButton = document.getElementById('secondaryButton');
       const downloadLink = document.getElementById('downloadLink');
       const modificationCountDiv = document.getElementById('modificationCount');
-      const secondaryCountDiv = document.getElementById('secondaryCount');
       const countSpan = document.getElementById('count');
 
       if (!fileInput.files.length) {
@@ -104,33 +96,27 @@
       const file = fileInput.files[0];
       const reader = new FileReader();
 
-      reader.onload = function(event) {
+      reader.onload = function (event) {
         originalContent = event.target.result;
         const updatedNumbers = [];
 
+        // Identifier les contacts et numéros à modifier
         updatedContent = originalContent.replace(/BEGIN:VCARD([\s\S]*?)END:VCARD/g, (vcard) => {
-          const nameMatch = vcard.match(/FN:(.+)/);
-          const phoneMatch = vcard.match(/TEL;.*:(.+)/);
+          const nameMatch = vcard.match(/FN:(.+)/); // Récupérer le nom complet
+          const phoneMatch = vcard.match(/TEL;.*:(.+)/); // Récupérer le numéro de téléphone
 
           if (phoneMatch) {
-            let originalPhone = phoneMatch[1].replace(/\s+/g, '');
-            const name = nameMatch ? nameMatch[1] : "Sans nom";
+            let originalPhone = phoneMatch[1].replace(/\s+/g, ''); // Supprimer les espaces
+            const name = nameMatch ? nameMatch[1] : 'Sans nom';
 
-            if (originalPhone.startsWith('+229')) {
-              const localPart = originalPhone.slice(4);
-              if (!localPart.startsWith('01')) {
-                const updatedPhone = `+22901${localPart}`;
-                updatedNumbers.push({ name, original: phoneMatch[1], updated: updatedPhone });
-                return vcard.replace(phoneMatch[1], updatedPhone);
-              }
-            } else if (originalPhone.length === 8 && !originalPhone.startsWith('01') && !originalPhone.startsWith('02')) {
+            if (originalPhone.length === 8 && !originalPhone.startsWith('01') && !originalPhone.startsWith('02')) {
               const updatedPhone = `01${originalPhone}`;
               const formattedUpdatedPhone = updatedPhone.replace(/(\d{2})(\d{2})(\d{4})/, '$1 $2 $3');
               updatedNumbers.push({ name, original: phoneMatch[1], updated: formattedUpdatedPhone });
               return vcard.replace(phoneMatch[1], formattedUpdatedPhone);
             }
           }
-          return vcard;
+          return vcard; // Pas de modification
         });
 
         // Afficher les modifications proposées
@@ -147,17 +133,17 @@
             previewDiv.appendChild(div);
           });
 
+          // Afficher le nombre total de modifications
           countSpan.textContent = updatedNumbers.length;
           modificationCountDiv.classList.remove('hidden');
+
           changesPending = true;
-          validateButton.classList.remove('hidden');
-          secondaryButton.classList.remove('hidden');
+          downloadLink.style.display = 'inline';
         } else {
           previewDiv.innerHTML += '<p>Aucune modification nécessaire.</p>';
           modificationCountDiv.classList.add('hidden');
           changesPending = false;
-          validateButton.classList.add('hidden');
-          secondaryButton.classList.add('hidden');
+          downloadLink.style.display = 'none';
         }
       };
 
@@ -165,41 +151,74 @@
     });
 
     document.getElementById('secondaryButton').addEventListener('click', () => {
+      const fileInput = document.getElementById('fileInput');
       const previewDiv = document.getElementById('preview');
-      const secondaryNumbers = [];
+      const downloadLink = document.getElementById('downloadLink');
 
-      secondaryContent = originalContent.replace(/BEGIN:VCARD([\s\S]*?)END:VCARD/g, (vcard) => {
-        const phoneMatch = vcard.match(/TEL;.*:(.+)/);
-        const nameMatch = vcard.match(/FN:(.+)/);
-        const name = nameMatch ? nameMatch[1] : "Sans nom";
-
-        if (phoneMatch) {
-          const originalPhone = phoneMatch[1].replace(/\s+/g, '');
-          if (originalPhone.length === 8 && !originalPhone.startsWith('01') && !originalPhone.startsWith('02')) {
-            const secondaryPhone = `+22901${originalPhone}`;
-            secondaryNumbers.push({ name, original: phoneMatch[1], secondary: secondaryPhone });
-            return vcard + `\nTEL;TYPE=SECONDARY:${secondaryPhone}`;
-          }
-        }
-        return vcard;
-      });
-
-      // Afficher les numéros secondaires proposés
-      previewDiv.innerHTML = '<h3>Numéros secondaires proposés :</h3>';
-      if (secondaryNumbers.length > 0) {
-        secondaryNumbers.forEach((entry) => {
-          const div = document.createElement('div');
-          div.className = 'contact';
-          div.innerHTML = `
-            <strong>Nom :</strong> ${entry.name} <br>
-            <strong>Numéro existant :</strong> ${entry.original} <br>
-            <strong>Numéro secondaire :</strong> ${entry.secondary}
-          `;
-          previewDiv.appendChild(div);
-        });
-      } else {
-        previewDiv.innerHTML += '<p>Aucun numéro secondaire proposé.</p>';
+      if (!fileInput.files.length) {
+        alert('Veuillez importer un fichier .vcf');
+        return;
       }
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function (event) {
+        originalContent = event.target.result;
+        const updatedNumbers = [];
+
+        // Ajout des numéros secondaires
+        updatedSecondaryContent = originalContent.replace(/BEGIN:VCARD([\s\S]*?)END:VCARD/g, (vcard) => {
+          const nameMatch = vcard.match(/FN:(.+)/); // Récupérer le nom complet
+          const phoneMatch = vcard.match(/TEL;.*:(.+)/); // Récupérer le numéro de téléphone
+
+          if (phoneMatch) {
+            let originalPhone = phoneMatch[1].replace(/\s+/g, ''); // Supprimer les espaces
+            const name = nameMatch ? nameMatch[1] : 'Sans nom';
+
+            if (!originalPhone.startsWith('+229')) {
+              originalPhone = '+229' + originalPhone; // Ajouter le préfixe international si nécessaire
+            }
+
+            if (!originalPhone.slice(4).startsWith('01')) {
+              const secondaryPhone = '+22901' + originalPhone.slice(4); // Générer le numéro secondaire
+              updatedNumbers.push({ name, existing: phoneMatch[1], secondary: secondaryPhone });
+
+              return vcard + `\nTEL;TYPE=SECONDARY:${secondaryPhone}`; // Ajouter le numéro secondaire
+            }
+          }
+
+          return vcard; // Pas de modification
+        });
+
+        // Afficher les numéros secondaires ajoutés
+        previewDiv.innerHTML = '<h3>Numéros secondaires ajoutés :</h3>';
+        if (updatedNumbers.length > 0) {
+          updatedNumbers.forEach((entry) => {
+            const div = document.createElement('div');
+            div.className = 'contact';
+            div.innerHTML = `
+              <strong>Nom :</strong> ${entry.name} <br>
+              <strong>Numéro existant :</strong> ${entry.existing} <br>
+              <strong>Numéro secondaire :</strong> ${entry.secondary}
+            `;
+            previewDiv.appendChild(div);
+          });
+
+          // Activer le lien de téléchargement
+          const blob = new Blob([updatedSecondaryContent], { type: 'text/vcard' });
+          const url = URL.createObjectURL(blob);
+
+          downloadLink.href = url;
+          downloadLink.style.display = 'inline';
+          downloadLink.textContent = 'Télécharger les contacts avec numéros secondaires';
+        } else {
+          previewDiv.innerHTML += '<p>Aucun numéro secondaire ajouté.</p>';
+          downloadLink.style.display = 'none';
+        }
+      };
+
+      reader.readAsText(file);
     });
   </script>
 </body>
