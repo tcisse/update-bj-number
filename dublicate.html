@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VCard Duplicate Checker</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold mb-4">VCard Duplicate Checker</h1>
+        <input type="file" id="fileInput" accept=".vcf" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mb-4">
+        <button id="checkDuplicatesButton" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Voir les doublons</button>
+        <div id="duplicatesOutput" class="mt-6"></div>
+        <button id="downloadButton" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mt-4 hidden">Télécharger sans doublons</button>
+    </div>
+
+    <script>
+        document.getElementById('checkDuplicatesButton').addEventListener('click', () => {
+            const fileInput = document.getElementById('fileInput');
+            if (!fileInput.files.length) {
+                alert('Veuillez importer un fichier .vcf');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function (event) {
+                const content = event.target.result;
+                const contacts = {};
+                const duplicates = [];
+
+                content.replace(/BEGIN:VCARD([\s\S]*?)END:VCARD/g, (vcard) => {
+                    const nameMatch = vcard.match(/FN:(.+)/);
+                    const phoneMatch = vcard.match(/TEL;.*:(.+)/);
+
+                    if (nameMatch && phoneMatch) {
+                        const name = nameMatch[1].trim();
+                        const phone = phoneMatch[1].trim();
+
+                        if (contacts[name]) {
+                            duplicates.push({ name, phone, vcard });
+                        } else {
+                            contacts[name] = { phone, vcard };
+                        }
+                    }
+                });
+
+                const outputDiv = document.getElementById('duplicatesOutput');
+                if (duplicates.length > 0) {
+                    outputDiv.innerHTML = '<h2 class="text-xl font-bold mb-2">Doublons trouvés :</h2><ul class="list-disc pl-5">' + duplicates.map((contact, index) => `<li><input type="checkbox" id="duplicate-${index}" data-index="${index}" class="mr-2">${contact.name} - ${contact.phone}</li>`).join('') + '</ul>';
+                    document.getElementById('downloadButton').classList.remove('hidden');
+                } else {
+                    outputDiv.innerHTML = '<h2 class="text-xl font-bold mb-2">Aucun doublon trouvé</h2>';
+                    document.getElementById('downloadButton').classList.add('hidden');
+                }
+
+                document.getElementById('downloadButton').addEventListener('click', () => {
+                    const selectedIndexes = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(checkbox => parseInt(checkbox.getAttribute('data-index')));
+                    const filteredContacts = Object.values(contacts).filter((contact, index) => !selectedIndexes.includes(index));
+                    const finalContent = filteredContacts.map(contact => contact.vcard).join('\n');
+
+                    const blob = new Blob([finalContent], { type: 'text/vcard' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'contacts_without_duplicates.vcf';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                });
+            };
+
+            reader.readAsText(file);
+        });
+    </script>
+</body>
+</html>
