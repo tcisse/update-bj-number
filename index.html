@@ -72,7 +72,7 @@
     <div id="modificationCount" class="hidden">
       <h3>Total de contacts à modifier : <span id="count"></span></h3>
     </div>
-    <a id="downloadLink" href="#" download="updated_contacts.vcf">Télécharger les contacts modifiés</a>
+    <a id="downloadLink" href="#" download="updated_contacts.vcf">Télécharger le fichier modifié</a>
   </div>
 
   <script>
@@ -81,10 +81,19 @@
     let updatedSecondaryContent = '';
     let changesPending = false;
 
+    function enableDownload(content, fileName) {
+      const downloadLink = document.getElementById('downloadLink');
+      const blob = new Blob([content], { type: 'text/vcard' });
+      const url = URL.createObjectURL(blob);
+
+      downloadLink.href = url;
+      downloadLink.download = fileName;
+      downloadLink.style.display = 'inline';
+    }
+
     document.getElementById('checkButton').addEventListener('click', () => {
       const fileInput = document.getElementById('fileInput');
       const previewDiv = document.getElementById('preview');
-      const downloadLink = document.getElementById('downloadLink');
       const modificationCountDiv = document.getElementById('modificationCount');
       const countSpan = document.getElementById('count');
 
@@ -100,7 +109,6 @@
         originalContent = event.target.result;
         const updatedNumbers = [];
 
-        // Identifier les contacts et numéros à modifier
         updatedContent = originalContent.replace(/BEGIN:VCARD([\s\S]*?)END:VCARD/g, (vcard) => {
           const nameMatch = vcard.match(/FN:(.+)/); // Récupérer le nom complet
           const phoneMatch = vcard.match(/TEL;.*:(.+)/); // Récupérer le numéro de téléphone
@@ -138,12 +146,12 @@
           modificationCountDiv.classList.remove('hidden');
 
           changesPending = true;
-          downloadLink.style.display = 'inline';
+          enableDownload(updatedContent, 'updated_contacts.vcf');
         } else {
           previewDiv.innerHTML += '<p>Aucune modification nécessaire.</p>';
           modificationCountDiv.classList.add('hidden');
           changesPending = false;
-          downloadLink.style.display = 'none';
+          document.getElementById('downloadLink').style.display = 'none';
         }
       };
 
@@ -153,7 +161,6 @@
     document.getElementById('secondaryButton').addEventListener('click', () => {
       const fileInput = document.getElementById('fileInput');
       const previewDiv = document.getElementById('preview');
-      const downloadLink = document.getElementById('downloadLink');
 
       if (!fileInput.files.length) {
         alert('Veuillez importer un fichier .vcf');
@@ -167,7 +174,6 @@
         originalContent = event.target.result;
         const updatedNumbers = [];
 
-        // Ajout des numéros secondaires
         updatedSecondaryContent = originalContent.replace(/BEGIN:VCARD([\s\S]*?)END:VCARD/g, (vcard) => {
           const nameMatch = vcard.match(/FN:(.+)/); // Récupérer le nom complet
           const phoneMatch = vcard.match(/TEL;.*:(.+)/); // Récupérer le numéro de téléphone
@@ -205,16 +211,10 @@
             previewDiv.appendChild(div);
           });
 
-          // Activer le lien de téléchargement
-          const blob = new Blob([updatedSecondaryContent], { type: 'text/vcard' });
-          const url = URL.createObjectURL(blob);
-
-          downloadLink.href = url;
-          downloadLink.style.display = 'inline';
-          downloadLink.textContent = 'Télécharger les contacts avec numéros secondaires';
+          enableDownload(updatedSecondaryContent, 'contacts_with_secondary_numbers.vcf');
         } else {
           previewDiv.innerHTML += '<p>Aucun numéro secondaire ajouté.</p>';
-          downloadLink.style.display = 'none';
+          document.getElementById('downloadLink').style.display = 'none';
         }
       };
 
