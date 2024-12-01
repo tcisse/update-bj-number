@@ -20,6 +20,9 @@ Ce projet est une application web qui permet de mettre à jour vos contacts tél
     - Ancien numéro.
     - Nouveau numéro.
 
+- **Comptage des contacts affectés** :
+  - Nombre total de numéros modifiés ou ajoutés.
+
 - **Validation stricte des numéros** :
   - Les numéros doivent contenir exactement **8 chiffres** après suppression des espaces.
   - Les numéros déjà conformes (`01` en préfixe) ne sont pas modifiés.
@@ -52,6 +55,11 @@ Ce projet est une application web qui permet de mettre à jour vos contacts tél
    - Exemple : `+22951220980` devient `+2290151220980`.
    - Les numéros déjà conformes (ex. `+2290151220980`) restent inchangés.
 
+7. **Création de numéros secondaires** :
+   - Ajoute un nouveau numéro basé sur la logique d'ajout du préfixe `01`.
+   - Exemple : 
+     - Ancien numéro : `94612855`
+     - Numéro secondaire créé : `01 94 61 2855`
 
 ---
 
@@ -64,23 +72,29 @@ Ce projet est une application web qui permet de mettre à jour vos contacts tél
 
 ---
 
-## Utilisation
+## Instructions d'Utilisation
 
-### 1. Importation d'un fichier `.vcf`
-1. Cliquez sur le bouton **Importer** et sélectionnez un fichier `.vcf`.
-2. L'application analysera les numéros dans le fichier.
+### Étape 1 : Importer un Fichier `.vcf`
+1. Cliquez sur le bouton **Importer un fichier** et sélectionnez un fichier `.vcf`.
+2. L'application analysera les contacts pour identifier les numéros nécessitant une modification ou un ajout.
 
-### 2. Visualisation des modifications
-1. Une liste des contacts modifiés sera affichée avec :
+### Étape 2 : Visualiser les Modifications
+1. Cliquez sur **Afficher les modifications proposées** pour voir :
+   - Les numéros à mettre à jour.
+   - Les numéros secondaires à ajouter.
+2. Examinez les résultats affichés :
    - Nom du contact.
    - Ancien numéro.
-   - Nouveau numéro.
+   - Nouveau numéro (ou numéro secondaire).
 
-2. Les numéros invalides ou déjà conformes seront exclus de la liste.
+### Étape 3 : Valider et Télécharger
+1. **Pour mettre à jour les contacts** :
+   - Cliquez sur **Valider les modifications** pour confirmer les changements.
+   - Téléchargez le fichier `.vcf` mis à jour.
 
-### 3. Validation et exportation
-1. Une fois les modifications validées, cliquez sur **Exporter**.
-2. Le fichier `.vcf` mis à jour sera téléchargé.
+2. **Pour créer des numéros secondaires** :
+   - Cliquez sur **Créer un numéro secondaire**.
+   - Téléchargez le fichier `.vcf` contenant les numéros secondaires.
 
 ---
 
